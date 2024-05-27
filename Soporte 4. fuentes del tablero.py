@@ -18,13 +18,19 @@ PORT = "5432"
 DBNAME = "data"
 
 # Título del dashboard
-app.title = "Analítica de Resultados Pruebas SABER 11"
+app.title = "Analítica de Resultados de Lectura Crítica en Pruebas SABER 11"
 
-# Función para calcular y mostrar el promedio del puntaje global
+
+#############################################################################################################
+#################################### SIN MODELO #############################################################
+#############################################################################################################
+
 @app.callback(
     Output('global-score', 'children'),
     [Input('refresh-button', 'n_clicks')]
 )
+
+# Función para promedio puntaje LC
 def update_global_score(n_clicks):
     conn = psycopg2.connect(
         dbname=DBNAME,
@@ -45,7 +51,7 @@ def update_global_score(n_clicks):
     
     return f"Promedio del Puntaje de Lectura Crítica Nacional: {average_global_score:.2f}"
 
-# Obtener opciones de cole_mcpio_ubicacion
+# Función de municipio
 def get_cole_mcpio_options():
     conn = psycopg2.connect(
         dbname=DBNAME,
@@ -64,6 +70,7 @@ def get_cole_mcpio_options():
     Output('mcpio-average', 'children'),
     [Input('mcpio-dropdown', 'value')]
 )
+
 def update_mcpio_average(selected_mcpio):
     conn = psycopg2.connect(
         dbname=DBNAME,
@@ -85,7 +92,7 @@ def update_mcpio_average(selected_mcpio):
     return f"Promedio del Puntaje de Lectura Crítica en {selected_mcpio}: {average_mcpio_score:.2f}"
 
 
-# Función para generar los gráficos de caja y histogramas
+# Función para gráficos de caja e histogramas
 @app.callback(
     Output('boxplots', 'children'),
     [Input('refresh-button', 'n_clicks')]
@@ -109,7 +116,7 @@ def update_boxplots(n_clicks):
     df = pd.read_sql_query(query, conn)
     conn.close()
     
-    df = df[
+    df = df[ #especificando valores de cada variable
         (df['fami_tieneautomovil'].isin(['Si', 'No'])) & 
         (df['fami_tienecomputador'].isin(['Si', 'No'])) & 
         (df['fami_tieneinternet'].isin(['Si', 'No'])) & 
@@ -119,11 +126,10 @@ def update_boxplots(n_clicks):
         (df['fami_personashogar'].isin(['1', '2', '3', '4', '5', '6', '7', '8', '9 o más'])) &
         (df['cole_bilingue'].isin(['S', 'N'])) &
         (df['cole_jornada'].notnull()) &
-        #(df['estu_estudiante'].notnull()) &
         (df['cole_mcpio_ubicacion'].notnull())
     ]
     
-    def add_mean_line(fig, df, column):
+    def add_mean_line(fig, df, column): # Promedio de categoría
         mean_values = df.groupby(column)['punt_lectura_critica'].mean().reset_index()
         for i, val in enumerate(mean_values.itertuples()):
             x_pos = i   # Separación entre las cajas
@@ -144,6 +150,7 @@ def update_boxplots(n_clicks):
             )
         return fig
 
+    # Gráficos
     fig1 = px.box(df, x='fami_tieneautomovil', y='punt_lectura_critica', title='¿La familia tiene automóvil?')
     fig1 = add_mean_line(fig1, df, 'fami_tieneautomovil')
     fig1.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
@@ -168,11 +175,8 @@ def update_boxplots(n_clicks):
     fig9 = add_mean_line(fig9, df, 'cole_jornada')
     fig9.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
-    #fig10 = px.box(df, x='estu_estudiante', y='punt_lectura_critica', title='¿Cuál es la naturaleza del estudiante?')
-    #fig10 = add_mean_line(fig10, df, 'estu_estudiante')
-    #fig10.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
-    def create_combined_histogram(df, column, title, category_order):
+    def create_combined_histogram(df, column, title, category_order): # Gráfico mixto histograma y líneas
         histogram = go.Histogram(
             x=df[column],
             name='Frecuencia',
@@ -207,6 +211,8 @@ def update_boxplots(n_clicks):
     fig6 = create_combined_histogram(df, 'fami_estratovivienda', 'Estrato de la Vivienda', ['1', '2', '3', '4', '5', '6'])
     fig7 = create_combined_histogram(df, 'fami_personashogar', 'Número de Personas en el Hogar', ['1', '2', '3', '4', '5', '6', '7', '8', '9 o más'])
 
+
+
     return html.Div([
         html.H2("Relación entre características socioeconómicas y puntaje en lectura crítica", style={'textAlign': 'center'}),
         html.Div([
@@ -238,6 +244,16 @@ def update_boxplots(n_clicks):
     ], style={'flex-direction': 'column'})
 
 
+
+#############################################################################################################
+#################################### Modelo Predictivo#######################################################
+#############################################################################################################
+
+import joblib
+modelo = joblib.load('modelo_regresion_lineal.pkl')
+
+
+#############################################################################################################
 app.layout = html.Div([
     html.Div(
         html.H1(app.title),
@@ -246,24 +262,9 @@ app.layout = html.Div([
     html.Button("Actualizar", id="refresh-button"),
     html.Div(id="global-score", style={'textAlign': 'center'}),
     html.Div(id="boxplots"),
-    dcc.Dropdown(
-        id='mcpio-dropdown',
-        options=get_cole_mcpio_options(),
-        value=get_cole_mcpio_options()[0]['value']
-    ),
     html.Div(id='mcpio-average')
 ])
 
 if __name__ == '__main__':
     app.run_server(debug=True)
 
-
-
-
-#############################################################################################################
-#################################### Modelo Predictivo#######################################################
-#############################################################################################################
-
-#import joblib
-
-#modelo = joblib.load('modelo_regresion_lineal.pkl')
