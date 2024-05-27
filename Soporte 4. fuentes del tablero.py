@@ -34,7 +34,7 @@ def update_global_score(n_clicks):
         port=PORT
     )
     
-    query = "SELECT AVG(punt_global) FROM resultados;"
+    query = "SELECT AVG(punt_lectura_critica) FROM icfes;"
     
     cursor = conn.cursor()
     cursor.execute(query)
@@ -43,7 +43,7 @@ def update_global_score(n_clicks):
     cursor.close()
     conn.close()
     
-    return f"Promedio del Puntaje Global Nacional: {average_global_score:.2f}"
+    return f"Promedio del Puntaje de Lectura Crítica Nacional: {average_global_score:.2f}"
 
 # Obtener opciones de cole_mcpio_ubicacion
 def get_cole_mcpio_options():
@@ -55,7 +55,7 @@ def get_cole_mcpio_options():
         port=PORT
     )
     cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT cole_mcpio_ubicacion FROM resultados;")
+    cursor.execute("SELECT DISTINCT cole_mcpio_ubicacion FROM icfes;")
     options = [{'label': row[0], 'value': row[0]} for row in cursor.fetchall()]
     conn.close()
     return options
@@ -73,7 +73,7 @@ def update_mcpio_average(selected_mcpio):
         port=PORT
     )
 
-    query = f"SELECT AVG(punt_global) FROM resultados WHERE cole_mcpio_ubicacion = '{selected_mcpio}';"
+    query = f"SELECT AVG(punt_lectura_critica) FROM icfes WHERE cole_mcpio_ubicacion = '{selected_mcpio}';"
     
     cursor = conn.cursor()
     cursor.execute(query)
@@ -82,7 +82,7 @@ def update_mcpio_average(selected_mcpio):
     cursor.close()
     conn.close()
     
-    return f"Promedio del Puntaje Global en {selected_mcpio}: {average_mcpio_score:.2f}"
+    return f"Promedio del Puntaje de Lectura Crítica en {selected_mcpio}: {average_mcpio_score:.2f}"
 
 
 # Función para generar los gráficos de caja y histogramas
@@ -100,10 +100,10 @@ def update_boxplots(n_clicks):
     )
     
     query = """
-    SELECT fami_tieneautomovil, fami_tienecomputador, fami_tieneinternet, fami_tienelavadora, punt_global,
+    SELECT fami_tieneautomovil, fami_tienecomputador, fami_tieneinternet, fami_tienelavadora, punt_lectura_critica,
            fami_cuartoshogar, fami_estratovivienda, fami_personashogar, cole_bilingue, cole_jornada, estu_estudiante, cole_mcpio_ubicacion
 
-    FROM resultados;
+    FROM icfes;
     """
     
     df = pd.read_sql_query(query, conn)
@@ -124,51 +124,51 @@ def update_boxplots(n_clicks):
     ]
     
     def add_mean_line(fig, df, column):
-        mean_values = df.groupby(column)['punt_global'].mean().reset_index()
+        mean_values = df.groupby(column)['punt_lectura_critica'].mean().reset_index()
         for i, val in enumerate(mean_values.itertuples()):
             x_pos = i   # Separación entre las cajas
             fig.add_shape(
                 type="line",
                 x0=x_pos - 0.25,
                 x1=x_pos + 0.25,
-                y0=val.punt_global,
-                y1=val.punt_global,
+                y0=val.punt_lectura_critica,
+                y1=val.punt_lectura_critica,
                 line=dict(color="darkblue", width=2),
             )
             fig.add_annotation(
                 x=x_pos,
-                y=val.punt_global,
-                text=f"Promedio: {val.punt_global:.2f}",
+                y=val.punt_lectura_critica,
+                text=f"Promedio: {val.punt_lectura_critica:.2f}",
                 showarrow=False,
                 yshift=10
             )
         return fig
 
-    fig1 = px.box(df, x='fami_tieneautomovil', y='punt_global', title='¿La familia tiene automóvil?')
+    fig1 = px.box(df, x='fami_tieneautomovil', y='punt_lectura_critica', title='¿La familia tiene automóvil?')
     fig1 = add_mean_line(fig1, df, 'fami_tieneautomovil')
     fig1.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-
-    fig2 = px.box(df, x='fami_tienecomputador', y='punt_global', title='¿La familia tiene computador?')
+    
+    fig2 = px.box(df, x='fami_tienecomputador', y='punt_lectura_critica', title='¿La familia tiene computador?')
     fig2 = add_mean_line(fig2, df, 'fami_tienecomputador')
     fig2.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
-    fig3 = px.box(df, x='fami_tieneinternet', y='punt_global', title='¿La familia tiene internet?')
+    fig3 = px.box(df, x='fami_tieneinternet', y='punt_lectura_critica', title='¿La familia tiene internet?')
     fig3 = add_mean_line(fig3, df, 'fami_tieneinternet')
     fig3.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
-    fig4 = px.box(df, x='fami_tienelavadora', y='punt_global', title='¿La familia tiene lavadora?')
+    fig4 = px.box(df, x='fami_tienelavadora', y='punt_lectura_critica', title='¿La familia tiene lavadora?')
     fig4 = add_mean_line(fig4, df, 'fami_tienelavadora')
     fig4.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
-    fig8 = px.box(df, x='cole_bilingue', y='punt_global', title='¿El colegio es bilingue?')
+    fig8 = px.box(df, x='cole_bilingue', y='punt_lectura_critica', title='¿El colegio es bilingue?')
     fig8 = add_mean_line(fig8, df, 'cole_bilingue')
     fig8.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
-    fig9 = px.box(df, x='cole_jornada', y='punt_global', title='¿Cuál es la jornada del colegio?')
+    fig9 = px.box(df, x='cole_jornada', y='punt_lectura_critica', title='¿Cuál es la jornada del colegio?')
     fig9 = add_mean_line(fig9, df, 'cole_jornada')
     fig9.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
-    #fig10 = px.box(df, x='estu_estudiante', y='punt_global', title='¿Cuál es la naturaleza del estudiante?')
+    #fig10 = px.box(df, x='estu_estudiante', y='punt_lectura_critica', title='¿Cuál es la naturaleza del estudiante?')
     #fig10 = add_mean_line(fig10, df, 'estu_estudiante')
     #fig10.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
 
@@ -179,10 +179,10 @@ def update_boxplots(n_clicks):
             marker=dict(color='lightblue')
         )
         
-        mean_values = df.groupby(column)['punt_global'].mean().reset_index()
+        mean_values = df.groupby(column)['punt_lectura_critica'].mean().reset_index()
         line = go.Scatter(
             x=mean_values[column],
-            y=mean_values['punt_global'],
+            y=mean_values['punt_lectura_critica'],
             name='Promedio Puntaje Global',
             yaxis='y2',
             mode='lines+markers',
@@ -208,7 +208,7 @@ def update_boxplots(n_clicks):
     fig7 = create_combined_histogram(df, 'fami_personashogar', 'Número de Personas en el Hogar', ['1', '2', '3', '4', '5', '6', '7', '8', '9 o más'])
 
     return html.Div([
-        html.H2("Relación entre características socioeconómicas y puntaje global", style={'textAlign': 'center'}),
+        html.H2("Relación entre características socioeconómicas y puntaje en lectura crítica", style={'textAlign': 'center'}),
         html.Div([
             html.Div(dcc.Graph(figure=fig1), style={'width': '25%'}),
             html.Div(dcc.Graph(figure=fig2), style={'width': '25%'}),
@@ -221,7 +221,7 @@ def update_boxplots(n_clicks):
             html.Div(dcc.Graph(figure=fig6), style={'width': '33%'}),
             html.Div(dcc.Graph(figure=fig7), style={'width': '33%'}),
         ], style={'display': 'flex'}),
-        html.H2("Relación entre características de la institución educativa y puntaje global", style={'textAlign': 'center'}),
+        html.H2("Relación entre características de la institución educativa y puntaje en lectura crítica", style={'textAlign': 'center'}),
         html.Div([
             html.Div(dcc.Graph(figure=fig8), style={'width': '40%'}),
             html.Div(dcc.Graph(figure=fig9), style={'width': '60%'}),
@@ -237,25 +237,6 @@ def update_boxplots(n_clicks):
         ])
     ], style={'flex-direction': 'column'})
 
-def update_mcpio_average(selected_mcpio):
-    conn = psycopg2.connect(
-        dbname=DBNAME,
-        user=USER,
-        password=PASSWORD,
-        host=HOST,
-        port=PORT
-    )
-
-    query = f"SELECT AVG(punt_global) FROM resultados WHERE cole_mcpio_ubicacion = '{selected_mcpio}';"
-    
-    cursor = conn.cursor()
-    cursor.execute(query)
-    average_mcpio_score = cursor.fetchone()[0]
-    
-    cursor.close()
-    conn.close()
-    
-    return f"Promedio del Puntaje Global en {selected_mcpio}: {average_mcpio_score:.2f}"
 
 app.layout = html.Div([
     html.Div(
@@ -264,8 +245,25 @@ app.layout = html.Div([
     ),
     html.Button("Actualizar", id="refresh-button"),
     html.Div(id="global-score", style={'textAlign': 'center'}),
-    html.Div(id="boxplots")
+    html.Div(id="boxplots"),
+    dcc.Dropdown(
+        id='mcpio-dropdown',
+        options=get_cole_mcpio_options(),
+        value=get_cole_mcpio_options()[0]['value']
+    ),
+    html.Div(id='mcpio-average')
 ])
 
 if __name__ == '__main__':
     app.run_server(debug=True)
+
+
+
+
+#############################################################################################################
+#################################### Modelo Predictivo#######################################################
+#############################################################################################################
+
+#import joblib
+
+#modelo = joblib.load('modelo_regresion_lineal.pkl')
