@@ -132,15 +132,9 @@ def update_boxplots(n_clicks):
     def add_mean_line(fig, df, column): # Promedio de categoría
         mean_values = df.groupby(column)['punt_lectura_critica'].mean().reset_index()
         for i, val in enumerate(mean_values.itertuples()):
-            x_pos = i   # Separación entre las cajas
-            fig.add_shape(
-                type="line",
-                x0=x_pos - 0.25,
-                x1=x_pos + 0.25,
-                y0=val.punt_lectura_critica,
-                y1=val.punt_lectura_critica,
-                line=dict(color="darkblue", width=2),
-            )
+            x_pos = i # Separación entre las cajas
+            
+            
             fig.add_annotation(
                 x=x_pos,
                 y=val.punt_lectura_critica,
@@ -187,7 +181,7 @@ def update_boxplots(n_clicks):
         line = go.Scatter(
             x=mean_values[column],
             y=mean_values['punt_lectura_critica'],
-            name='Promedio Puntaje Global',
+            name='Promedio Puntaje',
             yaxis='y2',
             mode='lines+markers',
             line=dict(color='darkblue'),
@@ -198,7 +192,8 @@ def update_boxplots(n_clicks):
             title=title,
             xaxis=dict(title=column),
             yaxis=dict(title='Frecuencia'),
-            yaxis2=dict(title='Promedio Puntaje Global', overlaying='y', side='right'),
+            yaxis2=dict(title='Promedio Puntaje Lectura Crítica', overlaying='y', side='right'),
+            legend=dict(x=1.3, y=1.0),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)'
         )
@@ -231,16 +226,7 @@ def update_boxplots(n_clicks):
         html.Div([
             html.Div(dcc.Graph(figure=fig8), style={'width': '40%'}),
             html.Div(dcc.Graph(figure=fig9), style={'width': '60%'}),
-            #html.Div(dcc.Graph(figure=fig10), style={'width': '33%'}),
-        ], style={'display': 'flex'}),
-        html.Div([
-            dcc.Dropdown(
-                id='mcpio-dropdown',
-                options=get_cole_mcpio_options(),
-                value=get_cole_mcpio_options()[0]['value']
-            ),
-            html.Div(id='mcpio-average')
-        ])
+        ], style={'display': 'flex'})
     ], style={'flex-direction': 'column'})
 
 
@@ -249,7 +235,7 @@ def update_boxplots(n_clicks):
 #############################################################################################################
 
 import joblib
-modelo = joblib.load('modelo_regresion_lineal.pkl')
+#modelo = joblib.load('modelo_regresion_lineal.pkl')
 
 
 #############################################################################################################
@@ -261,7 +247,14 @@ app.layout = html.Div([
     html.Button("Actualizar", id="refresh-button"),
     html.Div(id="global-score", style={'textAlign': 'center'}),
     html.Div(id="boxplots"),
-    html.Div(id='mcpio-average')
+    html.Div([
+        dcc.Dropdown(
+            id='mcpio-dropdown',
+            options=get_cole_mcpio_options(),
+            value=get_cole_mcpio_options()[0]['value']
+        ),
+        html.Div(id='mcpio-average')
+    ])
 ])
 
 if __name__ == '__main__':
